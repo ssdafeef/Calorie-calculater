@@ -5,6 +5,7 @@ import datetime
 
 DB_NAME = "food_log.db"
 CSV_FILE = "Indian_Food_Nutrition_Processed.csv"
+df = pd.read_csv(CSV_FILE)
 
 NUTRITION_COLS = [
     "Calories (kcal)", "Carbohydrates (g)", "Protein (g)", "Fats (g)",
