@@ -4,9 +4,8 @@ import sqlite3
 import datetime
 
 DB_NAME = "food_log.db"
-CSV_FILE = "Indian_Food_Nutrition_Processed.csv"
-CSV_FILE = "cloned/Indian_Food_Nutrition_Processed.csv"
-df = pd.read_csv(CSV_FILE)
+SERVINGS_CSV_FILE = "Indian_Food_Nutrition_Processed.csv"
+GRAMS_CSV_FILE = "newdb.csv"
 NUTRITION_COLS = [
     "Calories (kcal)", "Carbohydrates (g)", "Protein (g)", "Fats (g)",
     "Free Sugar (g)", "Fibre (g)", "Sodium (mg)", "Calcium (mg)",
@@ -14,10 +13,15 @@ NUTRITION_COLS = [
 ]
 
 @st.cache_data
-def load_data():
-    return pd.read_csv(CSV_FILE)
+def load_data(dataset_type):
+    """Load data based on input type (servings or grams)"""
+    if dataset_type == "Servings":
+        return pd.read_csv(SERVINGS_CSV_FILE)
+    else:  # Grams
+        return pd.read_csv(GRAMS_CSV_FILE)
 
-df = load_data()
+# Initialize with default dataset
+df = load_data("Servings")
 
 def create_db_tables():
     with sqlite3.connect(DB_NAME) as conn:
@@ -145,6 +149,9 @@ if page == "Add Food & Get Nutrition":
         "Amount eaten (number of servings)" if amount_type == "Servings" else "Amount eaten (grams)",
         min_value=1, value=1 if amount_type=="Servings" else 100, step=1
     )
+
+    # Load the appropriate dataset based on input type
+    df = load_data(amount_type)
 
     if search:
         results = df[df["Dish Name"].str.contains(search, case=False, na=False)]
