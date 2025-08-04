@@ -136,7 +136,7 @@ page = st.sidebar.selectbox(
 )
 
 if page == "Add Food & Get Nutrition":
-    st.title("kartick mota mc 🍽️")
+    st.title("Food Calorie & Nutrition Counter 🍽️")
     st.markdown("**Search food, choose servings or grams, and add to your daily log.**")
 
     search = st.text_input("Search for Dish Name", "")
