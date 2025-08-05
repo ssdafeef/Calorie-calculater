@@ -2,10 +2,11 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import datetime
+import calendar
 
 DB_NAME = "food_log.db"
-SERVINGS_CSV_FILE = "cloned/Indian_Food_Nutrition_Processed.csv"
-GRAMS_CSV_FILE = "cloned/newdb.csv"
+SERVINGS_CSV_FILE = "Indian_Food_Nutrition_Processed.csv"
+GRAMS_CSV_FILE = "newdb.csv"
 NUTRITION_COLS = [
     "Calories (kcal)", "Carbohydrates (g)", "Protein (g)", "Fats (g)",
     "Free Sugar (g)", "Fibre (g)", "Sodium (mg)", "Calcium (mg)",
@@ -136,12 +137,39 @@ today_str = datetime.date.today().isoformat()
 st.sidebar.title("Navigation")
 page = st.sidebar.selectbox(
     "Select Page",
-    ["Add Food & Get Nutrition", "Today's Food Log", "Last 2 Days' Food Log"]
+    ["Add Food & Get Nutrition", "Today's Food Log", "Last 2 Days' Food Log", "Monthly Calendar View"]
 )
 
 if page == "Add Food & Get Nutrition":
     st.title("Food Calorie & Nutrition Counter 🍽️")
     st.markdown("**Search food, choose servings or grams, and add to your daily log.**")
+
+    # Creatine input section
+    st.subheader("Add Creatine (grams) directly")
+    creatine_amount = st.number_input("Amount of Creatine (g)", min_value=0, value=0, step=1)
+    if st.button("Add Creatine to Today's Log"):
+        if creatine_amount > 0:
+            entry = (
+                today_str,
+                "Creatine",
+                creatine_amount,
+                "Creatine (g)",
+                0.0,  # calories
+                0.0,  # carbohydrates
+                0.0,  # protein
+                0.0,  # fats
+                0.0,  # free_sugar
+                0.0,  # fibre
+                0.0,  # sodium
+                0.0,  # calcium
+                0.0,  # iron
+                0.0,  # vitamin_c
+                0.0   # folate
+            )
+            add_food_log_entry(entry)
+            st.success(f"Added {creatine_amount}g of Creatine to today's log.")
+        else:
+            st.warning("Please enter a positive amount of creatine.")
 
     search = st.text_input("Search for Dish Name", "")
     amount_type = st.radio("Input by:", ["Servings", "Grams"], horizontal=True)
@@ -306,3 +334,61 @@ elif page == "Last 2 Days' Food Log":
             totals_rounded = {display_cols[col]: round(val, 2) for col, val in totals.items()}
             st.write(f"**{day}:**")
             st.write(totals_rounded)
+
+elif page == "Monthly Calendar View":
+    st.title("Monthly Calendar View")
+    today = datetime.date.today()
+    year = st.sidebar.number_input("Year", min_value=2000, max_value=2100, value=today.year)
+    month = st.sidebar.number_input("Month", min_value=1, max_value=12, value=today.month)
+
+    # Calculate first and last day of the month
+    first_day = datetime.date(year, month, 1)
+    last_day = datetime.date(year, month, calendar.monthrange(year, month)[1])
+
+    # Query food logs for the month
+    with sqlite3.connect(DB_NAME) as conn:
+        query = """
+            SELECT * FROM food_log
+            WHERE date BETWEEN ? AND ?
+            ORDER BY date
+        """
+        df_month = pd.read_sql_query(query, conn, params=(first_day.isoformat(), last_day.isoformat()))
+
+    if df_month.empty:
+        st.info("No food logs found for this month.")
+    else:
+        # Group by date and sum nutrition
+        df_month['date'] = pd.to_datetime(df_month['date']).dt.date
+
+        # Fix column names to match database columns (lowercase, underscores)
+        db_nutrition_cols = [
+            "calories", "carbohydrates", "protein", "fats",
+            "free_sugar", "fibre", "sodium", "calcium",
+            "iron", "vitamin_c", "folate"
+        ]
+        daily_totals = df_month.groupby('date')[db_nutrition_cols].sum()
+
+        # Create calendar grid
+        cal = calendar.Calendar()
+        month_days = cal.monthdatescalendar(year, month)
+
+        # Display calendar as a table
+        cal_data = []
+        for week in month_days:
+            week_data = []
+            for day in week:
+                if day.month == month:
+                    if day in daily_totals.index:
+                        totals = daily_totals.loc[day]
+                        day_str = f"{day.day}\n"
+                        for col in db_nutrition_cols:
+                            day_str += f"{col}: {round(totals[col], 2)}\n"
+                        week_data.append(day_str)
+                    else:
+                        week_data.append(f"{day.day}\nNo data")
+                else:
+                    week_data.append("")
+            cal_data.append(week_data)
+
+        df_cal = pd.DataFrame(cal_data, columns=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
+        st.table(df_cal)
