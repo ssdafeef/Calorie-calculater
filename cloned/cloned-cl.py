@@ -5,8 +5,8 @@ import datetime
 import calendar
 
 DB_NAME = "food_log.db"
-SERVINGS_CSV_FILE = "Indian_Food_Nutrition_Processed.csv"
-GRAMS_CSV_FILE = "newdb.csv"
+SERVINGS_CSV_FILE = "cloned/Indian_Food_Nutrition_Processed.csv"
+GRAMS_CSV_FILE = "cloned/newdb.csv"
 NUTRITION_COLS = [
     "Calories (kcal)", "Carbohydrates (g)", "Protein (g)", "Fats (g)",
     "Free Sugar (g)", "Fibre (g)", "Sodium (mg)", "Calcium (mg)",
