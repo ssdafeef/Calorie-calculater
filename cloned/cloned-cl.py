@@ -4,10 +4,6 @@ import sqlite3
 import datetime
 import calendar
 import os
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 # Get the directory of the current script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
