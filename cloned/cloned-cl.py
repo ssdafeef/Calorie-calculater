@@ -14,7 +14,7 @@ GRAMS_CSV_FILE = os.path.join(SCRIPT_DIR, "newdb.csv")
 NUTRITION_COLS = [
     "Calories (kcal)", "Carbohydrates (g)", "Protein (g)", "Fats (g)",
     "Free Sugar (g)", "Fibre (g)", "Sodium (mg)", "Calcium (mg)",
-    "Iron (mg)", "Vitamin C (mg)", "Folate (µg)", "Creatine (g)"
+    "Iron (mg)", "Vitamin C (mg)", "Folate (µg)", "Creatine(g)"
 ]
 
 @st.cache_data
