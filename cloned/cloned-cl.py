@@ -3,10 +3,14 @@ import pandas as pd
 import sqlite3
 import datetime
 import calendar
+import os
 
-DB_NAME = "food_log.db"
-SERVINGS_CSV_FILE = "Indian_Food_Nutrition_Processed.csv"
-GRAMS_CSV_FILE = "newdb.csv"
+# Get the directory of the current script
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DB_NAME = os.path.join(SCRIPT_DIR, "food_log.db")
+SERVINGS_CSV_FILE = os.path.join(SCRIPT_DIR, "Indian_Food_Nutrition_Processed.csv")
+GRAMS_CSV_FILE = os.path.join(SCRIPT_DIR, "newdb.csv")
 NUTRITION_COLS = [
     "Calories (kcal)", "Carbohydrates (g)", "Protein (g)", "Fats (g)",
     "Free Sugar (g)", "Fibre (g)", "Sodium (mg)", "Calcium (mg)",
