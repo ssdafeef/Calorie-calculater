@@ -4,6 +4,10 @@ import sqlite3
 import datetime
 import calendar
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Get the directory of the current script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -160,7 +164,8 @@ def check_password():
     
     def password_entered():
         """Checks whether a password entered by the user is correct."""
-        if st.session_state["password"] == "motamc":  # Change this to your desired password
+        correct_password = os.getenv("PASSWORD", "default_password")
+        if st.session_state["password"] == correct_password:
             st.session_state["password_correct"] = True
             del st.session_state["password"]  # don't store password
         else:
