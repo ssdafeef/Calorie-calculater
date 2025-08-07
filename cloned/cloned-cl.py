@@ -154,252 +154,291 @@ def get_last_n_days_log(n):
         df_log = pd.read_sql_query(query, conn, params=days)
     return df_log
 
-# === STREAMLIT APP ===
-st.sidebar.title("Navigation")
-page = st.sidebar.selectbox(
-    "Select Page",
-    ["Add Food & Get Nutrition", "Today's Food Log", "Last 2 Days' Food Log", "Monthly Calendar View"]
-)
-
-if page == "Add Food & Get Nutrition":
-    st.title("Food Calorie & Nutrition Counter 🍽️")
-    st.markdown("**Search food, choose servings or grams, and add to your daily log.**")
-
-    st.subheader("Add Creatine")
-    creatine_amount = st.number_input("Amount of Creatine (g)", min_value=0, value=0, step=1)
-    if st.button("Add Creatine to Today's Log"):
-        if creatine_amount > 0:
-            entry = (
-                today_str,
-                "Creatine",
-                creatine_amount,
-                "Creatine (g)",
-                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, creatine_amount
-            )
-            add_food_log_entry(entry)
-            st.success(f"Added {creatine_amount}g of Creatine to today's log.")
+# === PASSWORD PROTECTION ===
+def check_password():
+    """Returns `True` if the user had the correct password."""
+    
+    def password_entered():
+        """Checks whether a password entered by the user is correct."""
+        if st.session_state["password"] == "motamc":  # Change this to your desired password
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # don't store password
         else:
-            st.warning("Please enter a positive amount of creatine.")
+            st.session_state["password_correct"] = False
 
-    search = st.text_input("Search for Dish Name", "")
-    amount_type = st.radio("Input by:", ["Servings", "Grams"], horizontal=True)
-    amount = st.number_input(
-        "Amount eaten (number of servings)" if amount_type == "Servings" else "Amount eaten (grams)",
-        min_value=1, value=1 if amount_type == "Servings" else 100, step=1
+    if "password_correct" not in st.session_state:
+        # First run, show inputs for password.
+        st.title("🔒 Food Nutrition Tracker - Password Required")
+        st.text_input(
+            "Enter password", 
+            type="password", 
+            on_change=password_entered, 
+            key="password"
+        )
+        st.write("Lund le kartick hehehe")
+        return False
+    elif not st.session_state["password_correct"]:
+        # Password not correct, show input + error.
+        st.title("🔒 Food Nutrition Tracker - Password Required")
+        st.text_input(
+            "Enter password", 
+            type="password", 
+            on_change=password_entered, 
+            key="password"
+        )
+        st.error("😕 Password incorrect")
+        return False
+    else:
+        # Password correct.
+        return True
+
+if check_password():
+    # === STREAMLIT APP ===
+    st.sidebar.title("Navigation")
+    page = st.sidebar.selectbox(
+        "Select Page",
+        ["Add Food & Get Nutrition", "Today's Food Log", "Last 2 Days' Food Log", "Monthly Calendar View"]
     )
 
-    df = load_data(amount_type)
+    if page == "Add Food & Get Nutrition":
+        st.title("Food Calorie & Nutrition Counter 🍽️")
+        st.markdown("**Search food, choose servings or grams, and add to your daily log.**")
 
-    if search:
-        results = df[df["Dish Name"].str.contains(search, case=False, na=False)]
-        if not results.empty:
-            st.success(f"Found {len(results)} match(es)")
-            for idx, row in results.iterrows():
-                st.subheader(row["Dish Name"])
-                custom_override = get_custom_grams_nutrition(row["Dish Name"]) if amount_type == "Grams" else None
-                per100g = {col: row[col] for col in NUTRITION_COLS}
-                if custom_override is not None:
-                    custom_vals = list(custom_override.values())[1:]
-                    for i, col in enumerate(NUTRITION_COLS):
-                        per100g[col] = custom_vals[i] if custom_vals[i] is not None else per100g[col]
-                    st.info("You have updated values for 'grams' input for this dish!")
+        st.subheader("Add Creatine")
+        creatine_amount = st.number_input("Amount of Creatine (g)", min_value=0, value=0, step=1)
+        if st.button("Add Creatine to Today's Log"):
+            if creatine_amount > 0:
+                entry = (
+                    today_str,
+                    "Creatine",
+                    creatine_amount,
+                    "Creatine (g)",
+                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, creatine_amount
+                )
+                add_food_log_entry(entry)
+                st.success(f"Added {creatine_amount}g of Creatine to today's log.")
+            else:
+                st.warning("Please enter a positive amount of creatine.")
 
-                if amount_type == "Servings":
-                    scale = amount
-                    label = f"servings ({amount})"
-                    nutrition = {col: row[col] * scale for col in NUTRITION_COLS}
-                else:
-                    scale = amount / 100
-                    label = f"{amount}g"
-                    nutrition = {col: per100g[col] * scale for col in NUTRITION_COLS}
+        search = st.text_input("Search for Dish Name", "")
+        amount_type = st.radio("Input by:", ["Servings", "Grams"], horizontal=True)
+        amount = st.number_input(
+            "Amount eaten (number of servings)" if amount_type == "Servings" else "Amount eaten (grams)",
+            min_value=1, value=1 if amount_type == "Servings" else 100, step=1
+        )
 
-                st.write({col: round(val, 2) for col, val in nutrition.items()})
+        df = load_data(amount_type)
 
-                if amount_type == "Grams":
-                    with st.expander("Edit/correct nutrition (per 100g)", expanded=False):
-                        vals = {}
-                        if custom_override is not None:
-                            custom_vals = list(custom_override.values())[1:]
-                            for i, col in enumerate(NUTRITION_COLS):
-                                vals[col] = custom_vals[i] if custom_vals[i] is not None else row[col]
-                        else:
-                            for col in NUTRITION_COLS:
-                                vals[col] = row[col]
+        if search:
+            results = df[df["Dish Name"].str.contains(search, case=False, na=False)]
+            if not results.empty:
+                st.success(f"Found {len(results)} match(es)")
+                for idx, row in results.iterrows():
+                    st.subheader(row["Dish Name"])
+                    custom_override = get_custom_grams_nutrition(row["Dish Name"]) if amount_type == "Grams" else None
+                    per100g = {col: row[col] for col in NUTRITION_COLS}
+                    if custom_override is not None:
+                        custom_vals = list(custom_override.values())[1:]
+                        for i, col in enumerate(NUTRITION_COLS):
+                            per100g[col] = custom_vals[i] if custom_vals[i] is not None else per100g[col]
+                        st.info("You have updated values for 'grams' input for this dish!")
 
-                        edit_cols = []
-                        for col in NUTRITION_COLS:
-                            if col == "Creatine (g)":
-                                continue
-                            edit_cols.append(st.number_input(
-                                f"{col} per 100g", value=float(vals[col]), key=f"{col}_{row['Dish Name']}"
-                            ))
-
-                        if st.button("Save/correct values (grams only)", key=f"edit_{row['Dish Name']}"):
-                            add_custom_grams_nutrition(row["Dish Name"], dict(zip(NUTRITION_COLS[:-1], edit_cols)))
-                            st.success("Saved custom per-100g values!")
-
-                if st.button(f"Add to Today's Log: {row['Dish Name']} ({label})", key=f"add_{idx}_{amount}_{amount_type}"):
-                    entry = (
-                        today_str,
-                        row["Dish Name"],
-                        amount,
-                        amount_type,
-                        nutrition["Calories (kcal)"],
-                        nutrition["Carbohydrates (g)"],
-                        nutrition["Protein (g)"],
-                        nutrition["Fats (g)"],
-                        nutrition["Free Sugar (g)"],
-                        nutrition["Fibre (g)"],
-                        nutrition["Sodium (mg)"],
-                        nutrition["Calcium (mg)"],
-                        nutrition["Iron (mg)"],
-                        nutrition["Vitamin C (mg)"],
-                        nutrition["Folate (µg)"],
-                        0.0  # creatine (only added explicitly)
-                    )
-                    add_food_log_entry(entry)
-                    st.success(f"Added {row['Dish Name']} ({label}) to today's log.")
-        else:
-            st.warning("No match found!")
-    else:
-        st.info("Enter a dish name above to see nutrition facts.")
-
-    with st.expander("See All Foods in Database"):
-        st.dataframe(df)
-
-elif page == "Today's Food Log":
-    st.title("Today's Food Log & Nutrition Summary")
-    log = get_today_log(today_str)
-    if log.empty:
-        st.info("No foods added yet.")
-    else:
-        # Create a clean table display with delete buttons
-        st.write("#### Today's Food Log")
-        
-        # Create a dataframe for display with delete buttons
-        display_df = log.copy()
-        
-        # Display as a clean table with delete buttons
-        for idx, row in display_df.iterrows():
-            col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
-            
-            with col1:
-                st.write(f"**{row['dish_name']}**")
-            
-            with col2:
-                st.write(f"{row['amount']} {row['amount_unit']}")
-            
-            with col3:
-                st.write(f"{row['calories']:.1f} kcal")
-            
-            with col4:
-                if st.button("🗑️", key=f"delete_{row['id']}", help=f"Remove {row['dish_name']}"):
-                    delete_food_log_entry(row['id'])
-                    st.success(f"Removed {row['dish_name']} from today's log!")
-                    st.rerun()
-        
-        st.write("---")
-        totals = log.drop(columns=["id", "date", "dish_name", "amount", "amount_unit"]).sum()
-        st.write("#### Total Nutrition for Today:")
-        
-        # Display totals in a clean table
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Calories", f"{totals['calories']:.1f} kcal")
-        with col2:
-            st.metric("Protein", f"{totals['protein']:.1f}g")
-        with col3:
-            st.metric("Carbs", f"{totals['carbohydrates']:.1f}g")
-        with col4:
-            st.metric("Fats", f"{totals['fats']:.1f}g")
-        
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Fiber", f"{totals['fibre']:.1f}g")
-        with col2:
-            st.metric("Sugar", f"{totals['free_sugar']:.1f}g")
-        with col3:
-            st.metric("Sodium", f"{totals['sodium']:.0f}mg")
-        with col4:
-            st.metric("Iron", f"{totals['iron']:.1f}mg")
-        
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Creatine", f"{totals['creatine']:.1f}g")
-        with col2:
-            st.metric("Calcium", f"{totals['calcium']:.0f}mg")
-        with col3:
-            st.metric("Vitamin C", f"{totals['vitamin_c']:.0f}mg")
-        with col4:
-            st.metric("Folate", f"{totals['folate']:.0f}µg")
-        
-        st.write("---")
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            if st.button("Clear Entire Log for Today", type="secondary"):
-                clear_today_log(today_str)
-                st.success("Today's entire log cleared! Please refresh.")
-                st.rerun()
-
-elif page == "Last 2 Days' Food Log":
-    st.title("Food Log: Last 3 Days & Nutrition Summary")
-    log = get_last_n_days_log(3)
-    if log.empty:
-        st.info("No food logs for the past 3 days.")
-    else:
-        log['date'] = pd.to_datetime(log['date']).dt.date
-        grouped = log.groupby('date')
-        for day, df_day in grouped:
-            st.write(f"### {day}")
-            st.dataframe(df_day)
-            totals = df_day.drop(columns=["id", "date", "dish_name", "amount", "amount_unit"]).sum()
-            st.write("**Nutrition Totals:**")
-            st.write({col: round(val, 2) for col, val in totals.items()})
-
-elif page == "Monthly Calendar View":
-    st.title("Monthly Calendar View")
-    today = datetime.date.today()
-    year = st.sidebar.number_input("Year", min_value=2000, max_value=2100, value=today.year)
-    month = st.sidebar.number_input("Month", min_value=1, max_value=12, value=today.month)
-
-    first_day = datetime.date(year, month, 1)
-    last_day = datetime.date(year, month, calendar.monthrange(year, month)[1])
-
-    with sqlite3.connect(DB_NAME) as conn:
-        query = """
-            SELECT * FROM food_log
-            WHERE date BETWEEN ? AND ?
-            ORDER BY date
-        """
-        df_month = pd.read_sql_query(query, conn, params=(first_day.isoformat(), last_day.isoformat()))
-
-    if df_month.empty:
-        st.info("No food logs found for this month.")
-    else:
-        df_month['date'] = pd.to_datetime(df_month['date']).dt.date
-        db_nutrition_cols = [
-            "calories", "carbohydrates", "protein", "fats",
-            "free_sugar", "fibre", "sodium", "calcium",
-            "iron", "vitamin_c", "folate"
-        ]
-        daily_totals = df_month.groupby('date')[db_nutrition_cols].sum()
-        cal = calendar.Calendar()
-        month_days = cal.monthdatescalendar(year, month)
-        cal_data = []
-        for week in month_days:
-            week_data = []
-            for day in week:
-                if day.month == month:
-                    if day in daily_totals.index:
-                        totals = daily_totals.loc[day]
-                        day_str = f"{day.day}\n"
-                        for col in db_nutrition_cols:
-                            day_str += f"{col}: {round(totals[col], 2)}\n"
-                        week_data.append(day_str)
+                    if amount_type == "Servings":
+                        scale = amount
+                        label = f"servings ({amount})"
+                        nutrition = {col: row[col] * scale for col in NUTRITION_COLS}
                     else:
-                        week_data.append(f"{day.day}\nNo data")
-                else:
-                    week_data.append("")
-            cal_data.append(week_data)
-        df_cal = pd.DataFrame(cal_data, columns=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
-        st.table(df_cal)
+                        scale = amount / 100
+                        label = f"{amount}g"
+                        nutrition = {col: per100g[col] * scale for col in NUTRITION_COLS}
+
+                    st.write({col: round(val, 2) for col, val in nutrition.items()})
+
+                    if amount_type == "Grams":
+                        with st.expander("Edit/correct nutrition (per 100g)", expanded=False):
+                            vals = {}
+                            if custom_override is not None:
+                                custom_vals = list(custom_override.values())[1:]
+                                for i, col in enumerate(NUTRITION_COLS):
+                                    vals[col] = custom_vals[i] if custom_vals[i] is not None else row[col]
+                            else:
+                                for col in NUTRITION_COLS:
+                                    vals[col] = row[col]
+
+                            edit_cols = []
+                            for col in NUTRITION_COLS:
+                                if col == "Creatine (g)":
+                                    continue
+                                edit_cols.append(st.number_input(
+                                    f"{col} per 100g", value=float(vals[col]), key=f"{col}_{row['Dish Name']}"
+                                ))
+
+                            if st.button("Save/correct values (grams only)", key=f"edit_{row['Dish Name']}"):
+                                add_custom_grams_nutrition(row["Dish Name"], dict(zip(NUTRITION_COLS[:-1], edit_cols)))
+                                st.success("Saved custom per-100g values!")
+
+                    if st.button(f"Add to Today's Log: {row['Dish Name']} ({label})", key=f"add_{idx}_{amount}_{amount_type}"):
+                        entry = (
+                            today_str,
+                            row["Dish Name"],
+                            amount,
+                            amount_type,
+                            nutrition["Calories (kcal)"],
+                            nutrition["Carbohydrates (g)"],
+                            nutrition["Protein (g)"],
+                            nutrition["Fats (g)"],
+                            nutrition["Free Sugar (g)"],
+                            nutrition["Fibre (g)"],
+                            nutrition["Sodium (mg)"],
+                            nutrition["Calcium (mg)"],
+                            nutrition["Iron (mg)"],
+                            nutrition["Vitamin C (mg)"],
+                            nutrition["Folate (µg)"],
+                            0.0  # creatine (only added explicitly)
+                        )
+                        add_food_log_entry(entry)
+                        st.success(f"Added {row['Dish Name']} ({label}) to today's log.")
+            else:
+                st.warning("No match found!")
+        else:
+            st.info("Enter a dish name above to see nutrition facts.")
+
+        with st.expander("See All Foods in Database"):
+            st.dataframe(df)
+
+    elif page == "Today's Food Log":
+        st.title("Today's Food Log & Nutrition Summary")
+        log = get_today_log(today_str)
+        if log.empty:
+            st.info("No foods added yet.")
+        else:
+            # Create a clean table display with delete buttons
+            st.write("#### Today's Food Log")
+            
+            # Create a dataframe for display with delete buttons
+            display_df = log.copy()
+            
+            # Display as a clean table with delete buttons
+            for idx, row in display_df.iterrows():
+                col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+                
+                with col1:
+                    st.write(f"**{row['dish_name']}**")
+                
+                with col2:
+                    st.write(f"{row['amount']} {row['amount_unit']}")
+                
+                with col3:
+                    st.write(f"{row['calories']:.1f} kcal")
+                
+                with col4:
+                    if st.button("🗑️", key=f"delete_{row['id']}", help=f"Remove {row['dish_name']}"):
+                        delete_food_log_entry(row['id'])
+                        st.success(f"Removed {row['dish_name']} from today's log!")
+                        st.rerun()
+            
+            st.write("---")
+            totals = log.drop(columns=["id", "date", "dish_name", "amount", "amount_unit"]).sum()
+            st.write("#### Total Nutrition for Today:")
+            
+            # Display totals in a clean table
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Calories", f"{totals['calories']:.1f} kcal")
+            with col2:
+                st.metric("Protein", f"{totals['protein']:.1f}g")
+            with col3:
+                st.metric("Carbs", f"{totals['carbohydrates']:.1f}g")
+            with col4:
+                st.metric("Fats", f"{totals['fats']:.1f}g")
+            
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Fiber", f"{totals['fibre']:.1f}g")
+            with col2:
+                st.metric("Sugar", f"{totals['free_sugar']:.1f}g")
+            with col3:
+                st.metric("Sodium", f"{totals['sodium']:.0f}mg")
+            with col4:
+                st.metric("Iron", f"{totals['iron']:.1f}mg")
+            
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Creatine", f"{totals['creatine']:.1f}g")
+            with col2:
+                st.metric("Calcium", f"{totals['calcium']:.0f}mg")
+            with col3:
+                st.metric("Vitamin C", f"{totals['vitamin_c']:.0f}mg")
+            with col4:
+                st.metric("Folate", f"{totals['folate']:.0f}µg")
+            
+            st.write("---")
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                if st.button("Clear Entire Log for Today", type="secondary"):
+                    clear_today_log(today_str)
+                    st.success("Today's entire log cleared! Please refresh.")
+                    st.rerun()
+
+    elif page == "Last 2 Days' Food Log":
+        st.title("Food Log: Last 3 Days & Nutrition Summary")
+        log = get_last_n_days_log(3)
+        if log.empty:
+            st.info("No food logs for the past 3 days.")
+        else:
+            log['date'] = pd.to_datetime(log['date']).dt.date
+            grouped = log.groupby('date')
+            for day, df_day in grouped:
+                st.write(f"### {day}")
+                st.dataframe(df_day)
+                totals = df_day.drop(columns=["id", "date", "dish_name", "amount", "amount_unit"]).sum()
+                st.write("**Nutrition Totals:**")
+                st.write({col: round(val, 2) for col, val in totals.items()})
+
+    elif page == "Monthly Calendar View":
+        st.title("Monthly Calendar View")
+        today = datetime.date.today()
+        year = st.sidebar.number_input("Year", min_value=2000, max_value=2100, value=today.year)
+        month = st.sidebar.number_input("Month", min_value=1, max_value=12, value=today.month)
+
+        first_day = datetime.date(year, month, 1)
+        last_day = datetime.date(year, month, calendar.monthrange(year, month)[1])
+
+        with sqlite3.connect(DB_NAME) as conn:
+            query = """
+                SELECT * FROM food_log
+                WHERE date BETWEEN ? AND ?
+                ORDER BY date
+            """
+            df_month = pd.read_sql_query(query, conn, params=(first_day.isoformat(), last_day.isoformat()))
+
+        if df_month.empty:
+            st.info("No food logs found for this month.")
+        else:
+            df_month['date'] = pd.to_datetime(df_month['date']).dt.date
+            db_nutrition_cols = [
+                "calories", "carbohydrates", "protein", "fats",
+                "free_sugar", "fibre", "sodium", "calcium",
+                "iron", "vitamin_c", "folate"
+            ]
+            daily_totals = df_month.groupby('date')[db_nutrition_cols].sum()
+            cal = calendar.Calendar()
+            month_days = cal.monthdatescalendar(year, month)
+            cal_data = []
+            for week in month_days:
+                week_data = []
+                for day in week:
+                    if day.month == month:
+                        if day in daily_totals.index:
+                            totals = daily_totals.loc[day]
+                            day_str = f"{day.day}\n"
+                            for col in db_nutrition_cols:
+                                day_str += f"{col}: {round(totals[col], 2)}\n"
+                            week_data.append(day_str)
+                        else:
+                            week_data.append(f"{day.day}\nNo data")
+                    else:
+                        week_data.append("")
+                cal_data.append(week_data)
+            df_cal = pd.DataFrame(cal_data, columns=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
+            st.table(df_cal)
