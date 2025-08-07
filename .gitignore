@@ -1,2 +1,3 @@
 cloned/.env
 cloned/.env.example
+cloned/.streamlit/secrets.toml
