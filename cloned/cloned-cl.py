@@ -138,6 +138,13 @@ def clear_today_log(today_str):
         c.execute('DELETE FROM food_log WHERE date=?', (today_str,))
         conn.commit()
 
+def delete_food_log_entry(entry_id):
+    """Delete a specific food log entry by ID."""
+    with sqlite3.connect(DB_NAME) as conn:
+        c = conn.cursor()
+        c.execute('DELETE FROM food_log WHERE id=?', (entry_id,))
+        conn.commit()
+
 def get_last_n_days_log(n):
     today = datetime.date.today()
     days = [(today - datetime.timedelta(days=i)).isoformat() for i in range(n)]
@@ -266,21 +273,73 @@ elif page == "Today's Food Log":
     if log.empty:
         st.info("No foods added yet.")
     else:
-        display_cols = {
-            "dish_name": "Dish Name", "amount": "Amount", "amount_unit": "Unit",
-            "calories": "Calories (kcal)", "carbohydrates": "Carbohydrates (g)",
-            "protein": "Protein (g)", "fats": "Fats (g)", "free_sugar": "Free Sugar (g)",
-            "fibre": "Fibre (g)", "sodium": "Sodium (mg)", "calcium": "Calcium (mg)",
-            "iron": "Iron (mg)", "vitamin_c": "Vitamin C (mg)", "folate": "Folate (µg)",
-            "creatine": "Creatine (g)"
-        }
-        st.dataframe(log[list(display_cols.keys())].rename(columns=display_cols))
-        totals = log[[col for col in display_cols.keys() if col not in ("dish_name", "amount", "amount_unit")]].sum()
+        # Create a clean table display with delete buttons
+        st.write("#### Today's Food Log")
+        
+        # Create a dataframe for display with delete buttons
+        display_df = log.copy()
+        
+        # Display as a clean table with delete buttons
+        for idx, row in display_df.iterrows():
+            col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+            
+            with col1:
+                st.write(f"**{row['dish_name']}**")
+            
+            with col2:
+                st.write(f"{row['amount']} {row['amount_unit']}")
+            
+            with col3:
+                st.write(f"{row['calories']:.1f} kcal")
+            
+            with col4:
+                if st.button("🗑️", key=f"delete_{row['id']}", help=f"Remove {row['dish_name']}"):
+                    delete_food_log_entry(row['id'])
+                    st.success(f"Removed {row['dish_name']} from today's log!")
+                    st.rerun()
+        
+        st.write("---")
+        totals = log.drop(columns=["id", "date", "dish_name", "amount", "amount_unit"]).sum()
         st.write("#### Total Nutrition for Today:")
-        st.write({display_cols[col]: round(val, 2) for col, val in totals.items()})
-        if st.button("Clear Log for Today"):
-            clear_today_log(today_str)
-            st.success("Today's log cleared! Please refresh.")
+        
+        # Display totals in a clean table
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Calories", f"{totals['calories']:.1f} kcal")
+        with col2:
+            st.metric("Protein", f"{totals['protein']:.1f}g")
+        with col3:
+            st.metric("Carbs", f"{totals['carbohydrates']:.1f}g")
+        with col4:
+            st.metric("Fats", f"{totals['fats']:.1f}g")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Fiber", f"{totals['fibre']:.1f}g")
+        with col2:
+            st.metric("Sugar", f"{totals['free_sugar']:.1f}g")
+        with col3:
+            st.metric("Sodium", f"{totals['sodium']:.0f}mg")
+        with col4:
+            st.metric("Iron", f"{totals['iron']:.1f}mg")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Creatine", f"{totals['creatine']:.1f}g")
+        with col2:
+            st.metric("Calcium", f"{totals['calcium']:.0f}mg")
+        with col3:
+            st.metric("Vitamin C", f"{totals['vitamin_c']:.0f}mg")
+        with col4:
+            st.metric("Folate", f"{totals['folate']:.0f}µg")
+        
+        st.write("---")
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            if st.button("Clear Entire Log for Today", type="secondary"):
+                clear_today_log(today_str)
+                st.success("Today's entire log cleared! Please refresh.")
+                st.rerun()
 
 elif page == "Last 2 Days' Food Log":
     st.title("Food Log: Last 3 Days & Nutrition Summary")
