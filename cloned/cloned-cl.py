@@ -17,6 +17,139 @@ NUTRITION_COLS = [
     "Iron (mg)", "Vitamin C (mg)", "Folate (µg)", "Creatine(g)"
 ]
 
+# Sci-fi theme configuration
+st.set_page_config(
+    page_title="🚀 NUTRITION OS",
+    page_icon="🧬",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS for sci-fi theme
+st.markdown("""
+<style>
+    /* Main theme colors */
+    :root {
+        --neon-cyan: #00ffff;
+        --neon-purple: #ff00ff;
+        --neon-green: #39ff14;
+        --dark-bg: #0a0a0a;
+        --panel-bg: #1a1a2e;
+        --grid-color: #16213e;
+    }
+    
+    /* Global styles */
+    .main {
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+        color: #ffffff;
+    }
+    
+    /* Sidebar styling */
+    .css-1d391kg {
+        background: linear-gradient(180deg, #0f0f23 0%, #16213e 100%);
+        border-right: 1px solid var(--neon-cyan);
+    }
+    
+    /* Headers with neon glow */
+    h1 {
+        color: var(--neon-cyan);
+        text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+        font-family: 'Courier New', monospace;
+        letter-spacing: 2px;
+    }
+    
+    h2, h3 {
+        color: var(--neon-purple);
+        text-shadow: 0 0 5px var(--neon-purple);
+        font-family: 'Courier New', monospace;
+    }
+    
+    /* Buttons with cyberpunk styling */
+    .stButton > button {
+        background: linear-gradient(45deg, var(--neon-cyan), var(--neon-purple));
+        color: #000;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    
+    .stButton > button:hover {
+        box-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
+        transform: translateY(-2px);
+    }
+    
+    /* Input fields with holographic effect */
+    .stTextInput > div > div > input {
+        background: rgba(0, 255, 255, 0.1);
+        border: 1px solid var(--neon-cyan);
+        border-radius: 5px;
+        color: var(--neon-cyan);
+        font-family: 'Courier New', monospace;
+    }
+    
+    /* Dataframes with matrix styling */
+    .dataframe {
+        background: rgba(0, 255, 255, 0.05);
+        border: 1px solid var(--neon-cyan);
+        color: #ffffff;
+    }
+    
+    /* Metrics with digital display */
+    .metric {
+        background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.1));
+        border: 1px solid var(--neon-cyan);
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+    }
+    
+    /* Expander styling */
+    .streamlit-expanderHeader {
+        background: rgba(57, 255, 20, 0.1);
+        border: 1px solid var(--neon-green);
+        border-radius: 5px;
+        color: var(--neon-green);
+    }
+    
+    /* Success/Warning messages */
+    .stSuccess {
+        background: rgba(0, 255, 0, 0.1);
+        border: 1px solid var(--neon-green);
+        color: var(--neon-green);
+    }
+    
+    .stWarning {
+        background: rgba(255, 165, 0, 0.1);
+        border: 1px solid orange;
+        color: orange;
+    }
+    
+    /* Loading animation */
+    .stSpinner > div {
+        border-top-color: var(--neon-cyan) !important;
+    }
+    
+    /* Radio buttons */
+    .stRadio > div {
+        background: rgba(255, 0, 255, 0.1);
+        border: 1px solid var(--neon-purple);
+        border-radius: 5px;
+    }
+    
+    /* Number inputs */
+    .stNumberInput > div > div > input {
+        background: rgba(0, 255, 255, 0.1);
+        border: 1px solid var(--neon-cyan);
+        color: var(--neon-cyan);
+    }
+</style>
+""", unsafe_allow_html=True)
+
 @st.cache_data
 def load_data(dataset_type):
     if dataset_type == "Servings":
@@ -170,25 +303,60 @@ def check_password():
 
     if "password_correct" not in st.session_state:
         # First run, show inputs for password.
-        st.title("🔒 Food Nutrition Tracker - Password Required")
-        st.text_input(
-            "Enter password", 
-            type="password", 
-            on_change=password_entered, 
-            key="password"
-        )
-        st.write("Lund le kartick hehehe")
+        st.markdown("""
+            <h1 style='text-align: center; color: var(--neon-cyan); text-shadow: 0 0 20px var(--neon-cyan);'>
+                🔐 NUTRITION OS v2.1 - ACCESS PROTOCOL
+            </h1>
+            <div style='text-align: center; margin: 20px;'>
+                <p style='color: var(--neon-purple); font-family: "Courier New", monospace;'>
+                    ENTER AUTHORIZATION CODE TO PROCEED
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.text_input(
+                "AUTHORIZATION CODE", 
+                type="password", 
+                on_change=password_entered, 
+                key="password",
+                label_visibility="collapsed"
+            )
+        
+        st.markdown("""
+            <div style='text-align: center; margin-top: 20px;'>
+                <p style='color: var(--neon-green); font-family: "Courier New", monospace; font-size: 12px;'>
+                    SYSTEM STATUS: AWAITING INPUT...
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
         return False
     elif not st.session_state["password_correct"]:
         # Password not correct, show input + error.
-        st.title("🔒 Food Nutrition Tracker - Password Required")
-        st.text_input(
-            "Enter password", 
-            type="password", 
-            on_change=password_entered, 
-            key="password"
-        )
-        st.error("😕 Password incorrect")
+        st.markdown("""
+            <h1 style='text-align: center; color: var(--neon-cyan); text-shadow: 0 0 20px var(--neon-cyan);'>
+                🔐 NUTRITION OS v2.1 - ACCESS PROTOCOL
+            </h1>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.text_input(
+                "AUTHORIZATION CODE", 
+                type="password", 
+                on_change=password_entered, 
+                key="password",
+                label_visibility="collapsed"
+            )
+        
+        st.markdown("""
+            <div style='text-align: center; margin-top: 20px;'>
+                <p style='color: red; font-family: "Courier New", monospace; font-size: 14px;'>
+                    ⚠️ ACCESS DENIED - INVALID AUTHORIZATION CODE
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
         return False
     else:
         # Password correct.
@@ -196,54 +364,96 @@ def check_password():
 
 if check_password():
     # === STREAMLIT APP ===
-    st.sidebar.title("Navigation")
+    st.sidebar.markdown("""
+        <h2 style='color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan);'>
+            🧭 NAVIGATION MATRIX
+        </h2>
+    """, unsafe_allow_html=True)
+    
     page = st.sidebar.selectbox(
-        "Select Page",
-        ["Add Food & Get Nutrition", "Today's Food Log", "Last 2 Days' Food Log", "Monthly Calendar View"]
+        "SELECT MISSION",
+        ["🍽️ NUTRITION SCANNER", "📊 DAILY LOG ANALYSIS", "📈 72-HOUR REVIEW", "📅 TEMPORAL CALENDAR"]
     )
 
-    if page == "Add Food & Get Nutrition":
-        st.title("Food Calorie & Nutrition Counter 🍽️")
-        st.markdown("**Search food, choose servings or grams, and add to your daily log.**")
+    if page == "🍽️ NUTRITION SCANNER":
+        st.markdown("""
+            <h1 style='text-align: center; color: var(--neon-cyan); text-shadow: 0 0 20px var(--neon-cyan);'>
+                🧬 NUTRITION SCANNER
+            </h1>
+            <p style='text-align: center; color: var(--neon-purple); font-family: "Courier New", monospace;'>
+                SCAN FOOD ITEMS • ANALYZE NUTRITIONAL DATA • LOG CONSUMPTION
+            </p>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # Creatine section with sci-fi styling
+        st.markdown("""
+            <h3 style='color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green);'>
+                ⚡ CREATINE
+            </h3>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns([2, 1, 1])
+        with col1:
+            creatine_amount = st.number_input("CREATINE DOSAGE (g)", min_value=0, value=0, step=1)
+        with col2:
+            st.write("")
+            st.write("")
+            if st.button("⚡ ACTIVATE BOOST", type="primary"):
+                if creatine_amount > 0:
+                    entry = (
+                        today_str,
+                        "Creatine",
+                        creatine_amount,
+                        "Creatine (g)",
+                        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, creatine_amount
+                    )
+                    add_food_log_entry(entry)
+                    st.success(f"✅ CREATINE BOOST ACTIVATED: {creatine_amount}g LOGGED")
+                else:
+                    st.warning("⚠️ INVALID DOSAGE - ENTER POSITIVE VALUE")
 
-        st.subheader("Add Creatine")
-        creatine_amount = st.number_input("Amount of Creatine (g)", min_value=0, value=0, step=1)
-        if st.button("Add Creatine to Today's Log"):
-            if creatine_amount > 0:
-                entry = (
-                    today_str,
-                    "Creatine",
-                    creatine_amount,
-                    "Creatine (g)",
-                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, creatine_amount
-                )
-                add_food_log_entry(entry)
-                st.success(f"Added {creatine_amount}g of Creatine to today's log.")
-            else:
-                st.warning("Please enter a positive amount of creatine.")
-
-        search = st.text_input("Search for Dish Name", "")
-        amount_type = st.radio("Input by:", ["Servings", "Grams"], horizontal=True)
-        amount = st.number_input(
-            "Amount eaten (number of servings)" if amount_type == "Servings" else "Amount eaten (grams)",
-            min_value=1, value=1 if amount_type == "Servings" else 100, step=1
-        )
+        st.markdown("---")
+        
+        # Search section
+        st.markdown("""
+            <h3 style='color: var(--neon-purple); text-shadow: 0 0 10px var(--neon-purple);'>
+                🔍 FOOD DATABASE SCAN
+            </h3>
+        """, unsafe_allow_html=True)
+        
+        search = st.text_input("ENTER FOOD DESIGNATION", "")
+        
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            amount_type = st.radio("INPUT MODE", ["Servings", "Grams"], horizontal=True)
+        with col2:
+            amount = st.number_input(
+                "QUANTITY" if amount_type == "Servings" else "MASS (g)",
+                min_value=1, value=1 if amount_type == "Servings" else 100, step=1
+            )
 
         df = load_data(amount_type)
 
         if search:
             results = df[df["Dish Name"].str.contains(search, case=False, na=False)]
             if not results.empty:
-                st.success(f"Found {len(results)} match(es)")
+                st.success(f"🎯 TARGET ACQUIRED: {len(results)} MATCH(ES) FOUND")
+                
                 for idx, row in results.iterrows():
-                    st.subheader(row["Dish Name"])
+                    st.markdown(f"""
+                        <div style='border: 1px solid var(--neon-cyan); border-radius: 10px; padding: 15px; margin: 10px 0; background: rgba(0, 255, 255, 0.1);'>
+                            <h3 style='color: var(--neon-purple); text-shadow: 0 0 5px var(--neon-purple);'>{row["Dish Name"]}</h3>
+                    """, unsafe_allow_html=True)
+                    
                     custom_override = get_custom_grams_nutrition(row["Dish Name"]) if amount_type == "Grams" else None
                     per100g = {col: row[col] for col in NUTRITION_COLS}
                     if custom_override is not None:
                         custom_vals = list(custom_override.values())[1:]
                         for i, col in enumerate(NUTRITION_COLS):
                             per100g[col] = custom_vals[i] if custom_vals[i] is not None else per100g[col]
-                        st.info("You have updated values for 'grams' input for this dish!")
+                        st.info("⚠️ CUSTOMIZED GRAMS NUTRITION VALUES DETECTED")
 
                     if amount_type == "Servings":
                         scale = amount
@@ -257,7 +467,7 @@ if check_password():
                     st.write({col: round(val, 2) for col, val in nutrition.items()})
 
                     if amount_type == "Grams":
-                        with st.expander("Edit/correct nutrition (per 100g)", expanded=False):
+                        with st.expander("EDIT/CORRECT NUTRITION (PER 100G)", expanded=False):
                             vals = {}
                             if custom_override is not None:
                                 custom_vals = list(custom_override.values())[1:]
@@ -275,11 +485,11 @@ if check_password():
                                     f"{col} per 100g", value=float(vals[col]), key=f"{col}_{row['Dish Name']}"
                                 ))
 
-                            if st.button("Save/correct values (grams only)", key=f"edit_{row['Dish Name']}"):
+                            if st.button("SAVE/CORRECT VALUES (GRAMS ONLY)", key=f"edit_{row['Dish Name']}"):
                                 add_custom_grams_nutrition(row["Dish Name"], dict(zip(NUTRITION_COLS[:-1], edit_cols)))
-                                st.success("Saved custom per-100g values!")
+                                st.success("✅ CUSTOM PER-100G VALUES SAVED")
 
-                    if st.button(f"Add to Today's Log: {row['Dish Name']} ({label})", key=f"add_{idx}_{amount}_{amount_type}"):
+                    if st.button(f"ADD TO TODAY'S LOG: {row['Dish Name']} ({label})", key=f"add_{idx}_{amount}_{amount_type}"):
                         entry = (
                             today_str,
                             row["Dish Name"],
@@ -299,51 +509,43 @@ if check_password():
                             0.0  # creatine (only added explicitly)
                         )
                         add_food_log_entry(entry)
-                        st.success(f"Added {row['Dish Name']} ({label}) to today's log.")
+                        st.success(f"✅ {row['Dish Name']} ({label}) ADDED TO LOG")
             else:
-                st.warning("No match found!")
+                st.warning("⚠️ NO MATCH FOUND")
         else:
-            st.info("Enter a dish name above to see nutrition facts.")
+            st.info("ENTER A FOOD DESIGNATION ABOVE TO SCAN NUTRITION DATA")
 
-        with st.expander("See All Foods in Database"):
+        with st.expander("VIEW ALL FOODS IN DATABASE"):
             st.dataframe(df)
 
-    elif page == "Today's Food Log":
-        st.title("Today's Food Log & Nutrition Summary")
+    elif page == "📊 DAILY LOG ANALYSIS":
+        st.markdown("""
+            <h1 style='text-align: center; color: var(--neon-cyan); text-shadow: 0 0 20px var(--neon-cyan);'>
+                📅 DAILY LOG ANALYSIS
+            </h1>
+        """, unsafe_allow_html=True)
         log = get_today_log(today_str)
         if log.empty:
-            st.info("No foods added yet.")
+            st.info("⚠️ NO FOODS LOGGED TODAY")
         else:
-            # Create a clean table display with delete buttons
-            st.write("#### Today's Food Log")
-            
-            # Create a dataframe for display with delete buttons
+            st.markdown("#### TODAY'S FOOD LOG")
             display_df = log.copy()
-            
-            # Display as a clean table with delete buttons
             for idx, row in display_df.iterrows():
                 col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
-                
                 with col1:
-                    st.write(f"**{row['dish_name']}**")
-                
+                    st.markdown(f"**{row['dish_name']}**")
                 with col2:
-                    st.write(f"{row['amount']} {row['amount_unit']}")
-                
+                    st.markdown(f"{row['amount']} {row['amount_unit']}")
                 with col3:
-                    st.write(f"{row['calories']:.1f} kcal")
-                
+                    st.markdown(f"{row['calories']:.1f} kcal")
                 with col4:
                     if st.button("🗑️", key=f"delete_{row['id']}", help=f"Remove {row['dish_name']}"):
                         delete_food_log_entry(row['id'])
-                        st.success(f"Removed {row['dish_name']} from today's log!")
-                        st.rerun()
-            
-            st.write("---")
+                        st.success(f"✅ REMOVED {row['dish_name']} FROM LOG")
+                        st.experimental_rerun()
+            st.markdown("---")
             totals = log.drop(columns=["id", "date", "dish_name", "amount", "amount_unit"]).sum()
-            st.write("#### Total Nutrition for Today:")
-            
-            # Display totals in a clean table
+            st.markdown("#### TOTAL NUTRITION FOR TODAY")
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 st.metric("Calories", f"{totals['calories']:.1f} kcal")
@@ -353,7 +555,6 @@ if check_password():
                 st.metric("Carbs", f"{totals['carbohydrates']:.1f}g")
             with col4:
                 st.metric("Fats", f"{totals['fats']:.1f}g")
-            
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 st.metric("Fiber", f"{totals['fibre']:.1f}g")
@@ -363,7 +564,6 @@ if check_password():
                 st.metric("Sodium", f"{totals['sodium']:.0f}mg")
             with col4:
                 st.metric("Iron", f"{totals['iron']:.1f}mg")
-            
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 st.metric("Creatine", f"{totals['creatine']:.1f}g")
@@ -373,35 +573,42 @@ if check_password():
                 st.metric("Vitamin C", f"{totals['vitamin_c']:.0f}mg")
             with col4:
                 st.metric("Folate", f"{totals['folate']:.0f}µg")
-            
-            st.write("---")
+            st.markdown("---")
             col1, col2 = st.columns([3, 1])
             with col1:
-                if st.button("Clear Entire Log for Today", type="secondary"):
+                if st.button("CLEAR ENTIRE LOG FOR TODAY", type="secondary"):
                     clear_today_log(today_str)
-                    st.success("Today's entire log cleared! Please refresh.")
-                    st.rerun()
+                    st.success("✅ TODAY'S LOG CLEARED - PLEASE REFRESH")
+                    st.experimental_rerun()
 
-    elif page == "Last 2 Days' Food Log":
-        st.title("Food Log: Last 3 Days & Nutrition Summary")
+    elif page == "📈 72-HOUR REVIEW":
+        st.markdown("""
+            <h1 style='text-align: center; color: var(--neon-cyan); text-shadow: 0 0 20px var(--neon-cyan);'>
+                📈 72-HOUR REVIEW
+            </h1>
+        """, unsafe_allow_html=True)
         log = get_last_n_days_log(3)
         if log.empty:
-            st.info("No food logs for the past 3 days.")
+            st.info("⚠️ NO FOOD LOGS FOR PAST 3 DAYS")
         else:
             log['date'] = pd.to_datetime(log['date']).dt.date
             grouped = log.groupby('date')
             for day, df_day in grouped:
-                st.write(f"### {day}")
+                st.markdown(f"### {day}")
                 st.dataframe(df_day)
                 totals = df_day.drop(columns=["id", "date", "dish_name", "amount", "amount_unit"]).sum()
-                st.write("**Nutrition Totals:**")
+                st.markdown("**NUTRITION TOTALS:**")
                 st.write({col: round(val, 2) for col, val in totals.items()})
 
-    elif page == "Monthly Calendar View":
-        st.title("Monthly Calendar View")
+    elif page == "📅 TEMPORAL CALENDAR":
+        st.markdown("""
+            <h1 style='text-align: center; color: var(--neon-cyan); text-shadow: 0 0 20px var(--neon-cyan);'>
+                📅 TEMPORAL CALENDAR
+            </h1>
+        """, unsafe_allow_html=True)
         today = datetime.date.today()
-        year = st.sidebar.number_input("Year", min_value=2000, max_value=2100, value=today.year)
-        month = st.sidebar.number_input("Month", min_value=1, max_value=12, value=today.month)
+        year = st.sidebar.number_input("YEAR", min_value=2000, max_value=2100, value=today.year)
+        month = st.sidebar.number_input("MONTH", min_value=1, max_value=12, value=today.month)
 
         first_day = datetime.date(year, month, 1)
         last_day = datetime.date(year, month, calendar.monthrange(year, month)[1])
@@ -415,7 +622,7 @@ if check_password():
             df_month = pd.read_sql_query(query, conn, params=(first_day.isoformat(), last_day.isoformat()))
 
         if df_month.empty:
-            st.info("No food logs found for this month.")
+            st.info("⚠️ NO FOOD LOGS FOUND FOR THIS MONTH")
         else:
             df_month['date'] = pd.to_datetime(df_month['date']).dt.date
             db_nutrition_cols = [
@@ -438,7 +645,7 @@ if check_password():
                                 day_str += f"{col}: {round(totals[col], 2)}\n"
                             week_data.append(day_str)
                         else:
-                            week_data.append(f"{day.day}\nNo data")
+                            week_data.append(f"{day.day}\nNO DATA")
                     else:
                         week_data.append("")
                 cal_data.append(week_data)
