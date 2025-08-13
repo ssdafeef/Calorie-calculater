@@ -464,7 +464,17 @@ if check_password():
                         label = f"{amount}g"
                         nutrition = {col: per100g[col] * scale for col in NUTRITION_COLS}
 
-                    st.write({col: round(val, 2) for col, val in nutrition.items()})
+                    # Ensure all values are scalar before rounding
+                    nutrition_display = {}
+                    for col, val in nutrition.items():
+                        if hasattr(val, 'item'):  # Handle numpy scalars
+                            val = val.item()
+                        elif hasattr(val, 'values'):  # Handle pandas Series
+                            val = float(val.iloc[0]) if len(val) > 0 else 0.0
+                        else:
+                            val = float(val) if val is not None else 0.0
+                        nutrition_display[col] = round(val, 2)
+                    st.write(nutrition_display)
 
                     if amount_type == "Grams":
                         with st.expander("EDIT/CORRECT NUTRITION (PER 100G)", expanded=False):
