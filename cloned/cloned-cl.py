@@ -4,6 +4,7 @@ import sqlite3
 import datetime
 import calendar
 import os
+import plotly.graph_objects as go
 
 # Get the directory of the current script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -472,7 +473,11 @@ if check_password():
                         elif hasattr(val, 'values'):  # Handle pandas Series
                             val = float(val.iloc[0]) if len(val) > 0 else 0.0
                         else:
-                            val = float(val) if val is not None else 0.0
+                            try:
+                                val = float(val) if val is not None else 0.0
+                            except ValueError:
+                                # Handle malformed float strings like '2.02.0'
+                                val = 0.0
                         nutrition_display[col] = round(val, 2)
                     st.write(nutrition_display)
 
@@ -491,9 +496,14 @@ if check_password():
                             for col in NUTRITION_COLS:
                                 if col == "Creatine (g)":
                                     continue
-                                edit_cols.append(st.number_input(
-                                    f"{col} per 100g", value=float(vals[col]), key=f"{col}_{row['Dish Name']}"
-                                ))
+                                try:
+                                    edit_cols.append(st.number_input(
+                                        f"{col} per 100g", value=float(vals[col]), key=f"{col}_{row['Dish Name']}"
+                                    ))
+                                except ValueError:
+                                    edit_cols.append(st.number_input(
+                                        f"{col} per 100g", value=0.0, key=f"{col}_{row['Dish Name']}"
+                                    ))
 
                             if st.button("SAVE/CORRECT VALUES (GRAMS ONLY)", key=f"edit_{row['Dish Name']}"):
                                 add_custom_grams_nutrition(row["Dish Name"], dict(zip(NUTRITION_COLS[:-1], edit_cols)))
@@ -534,9 +544,84 @@ if check_password():
                 📅 DAILY LOG ANALYSIS
             </h1>
         """, unsafe_allow_html=True)
+        
+        # Initialize session state for goals
+        if 'calorie_goal' not in st.session_state:
+            st.session_state.calorie_goal = 2000
+        if 'protein_goal' not in st.session_state:
+            st.session_state.protein_goal = 50
+            
+        # Goal setting section
+        st.markdown("### 🎯 NUTRITION TARGETS")
+        col1, col2, col3 = st.columns([2, 2, 1])
+        with col1:
+            new_calorie_goal = st.number_input(
+                "DAILY CALORIE TARGET (kcal)",
+                min_value=500,
+                max_value=5000,
+                value=st.session_state.calorie_goal,
+                key="calorie_input"
+            )
+        with col2:
+            new_protein_goal = st.number_input(
+                "DAILY PROTEIN TARGET (g)",
+                min_value=10,
+                max_value=300,
+                value=st.session_state.protein_goal,
+                key="protein_input"
+            )
+        with col3:
+            st.write("")
+            st.write("")
+            if st.button("⚡ UPDATE TARGETS", type="primary"):
+                st.session_state.calorie_goal = new_calorie_goal
+                st.session_state.protein_goal = new_protein_goal
+                st.success("✅ TARGETS UPDATED")
+                st.experimental_rerun()
+        
         log = get_today_log(today_str)
         if log.empty:
             st.info("⚠️ NO FOODS LOGGED TODAY")
+            
+            # Show empty pie charts with goals
+            st.markdown("### 📈 TARGET VISUALIZATION")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Empty calories pie chart
+                fig_calories = go.Figure(data=[go.Pie(
+                    labels=['Target', 'Not Logged'],
+                    values=[st.session_state.calorie_goal, 0],
+                    hole=0.4,
+                    marker_colors=['#00ffff', '#1a1a2e']
+                )])
+                fig_calories.update_layout(
+                    title=f"CALORIE TARGET: {st.session_state.calorie_goal} kcal",
+                    height=400,
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#00ffff', family='Courier New'),
+                    title_font=dict(size=16, color='#00ffff')
+                )
+                st.plotly_chart(fig_calories, use_container_width=True)
+            
+            with col2:
+                # Empty protein pie chart
+                fig_protein = go.Figure(data=[go.Pie(
+                    labels=['Target', 'Not Logged'],
+                    values=[st.session_state.protein_goal, 0],
+                    hole=0.4,
+                    marker_colors=['#ff00ff', '#1a1a2e']
+                )])
+                fig_protein.update_layout(
+                    title=f"PROTEIN TARGET: {st.session_state.protein_goal}g",
+                    height=400,
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#ff00ff', family='Courier New'),
+                    title_font=dict(size=16, color='#ff00ff')
+                )
+                st.plotly_chart(fig_protein, use_container_width=True)
         else:
             st.markdown("#### TODAY'S FOOD LOG")
             display_df = log.copy()
@@ -554,17 +639,97 @@ if check_password():
                         st.success(f"✅ REMOVED {row['dish_name']} FROM LOG")
                         st.experimental_rerun()
             st.markdown("---")
-            totals = log.drop(columns=["id", "date", "dish_name", "amount", "amount_unit"]).sum()
-            st.markdown("#### TOTAL NUTRITION FOR TODAY")
+            
+            # Fix for TypeError: ensure all values are numeric before summing
+            numeric_cols = [col for col in log.columns if col not in ["id", "date", "dish_name", "amount", "amount_unit"]]
+            totals = log[numeric_cols].apply(pd.to_numeric, errors='coerce').fillna(0.0).sum()
+            
+            # Calculate remaining values
+            remaining_calories = max(0, st.session_state.calorie_goal - totals['calories'])
+            remaining_protein = max(0, st.session_state.protein_goal - totals['protein'])
+            
+            # Display metrics with remaining
+            st.markdown("#### 📊 NUTRITION ANALYSIS")
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.metric("Calories", f"{totals['calories']:.1f} kcal")
+                st.metric("Calories", f"{totals['calories']:.1f} kcal", 
+                         delta=f"{remaining_calories:.1f} remaining")
             with col2:
-                st.metric("Protein", f"{totals['protein']:.1f}g")
+                st.metric("Protein", f"{totals['protein']:.1f}g", 
+                         delta=f"{remaining_protein:.1f}g remaining")
             with col3:
                 st.metric("Carbs", f"{totals['carbohydrates']:.1f}g")
             with col4:
                 st.metric("Fats", f"{totals['fats']:.1f}g")
+            
+            # Pie charts section
+            st.markdown("### 📈 VISUAL NUTRITION TRACKING")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Calories pie chart
+                calories_data = {
+                    'Status': ['Consumed', 'Remaining'],
+                    'Values': [totals['calories'], remaining_calories]
+                }
+                fig_calories = go.Figure(data=[go.Pie(
+                    labels=calories_data['Status'],
+                    values=calories_data['Values'],
+                    hole=0.4,
+                    marker_colors=['#00ffff', '#1a1a2e'],
+                    textinfo='label+percent+value',
+                    texttemplate='%{label}<br>%{value:.0f} kcal<br>(%{percent})',
+                    textfont=dict(color='#ffffff', family='Courier New')
+                )])
+                fig_calories.update_layout(
+                    title=f"CALORIE PROGRESS<br>Target: {st.session_state.calorie_goal} kcal",
+                    height=400,
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#00ffff', family='Courier New'),
+                    title_font=dict(size=16, color='#00ffff')
+                )
+                st.plotly_chart(fig_calories, use_container_width=True)
+            
+            with col2:
+                # Protein pie chart
+                protein_data = {
+                    'Status': ['Consumed', 'Remaining'],
+                    'Values': [totals['protein'], remaining_protein]
+                }
+                fig_protein = go.Figure(data=[go.Pie(
+                    labels=protein_data['Status'],
+                    values=protein_data['Values'],
+                    hole=0.4,
+                    marker_colors=['#ff00ff', '#1a1a2e'],
+                    textinfo='label+percent+value',
+                    texttemplate='%{label}<br>%{value:.0f}g<br>(%{percent})',
+                    textfont=dict(color='#ffffff', family='Courier New')
+                )])
+                fig_protein.update_layout(
+                    title=f"PROTEIN PROGRESS<br>Target: {st.session_state.protein_goal}g",
+                    height=400,
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#ff00ff', family='Courier New'),
+                    title_font=dict(size=16, color='#ff00ff')
+                )
+                st.plotly_chart(fig_protein, use_container_width=True)
+            
+            # Progress bars
+            st.markdown("### 📊 PROGRESS INDICATORS")
+            calorie_progress = min(100, (totals['calories'] / st.session_state.calorie_goal) * 100)
+            protein_progress = min(100, (totals['protein'] / st.session_state.protein_goal) * 100)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown(f"**CALORIE PROGRESS: {calorie_progress:.1f}%**")
+                st.progress(calorie_progress / 100)
+            with col2:
+                st.markdown(f"**PROTEIN PROGRESS: {protein_progress:.1f}%**")
+                st.progress(protein_progress / 100)
+            
+            st.markdown("---")
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 st.metric("Fiber", f"{totals['fibre']:.1f}g")
