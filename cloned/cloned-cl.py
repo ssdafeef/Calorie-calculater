@@ -771,9 +771,11 @@ if check_password():
             for day, df_day in grouped:
                 st.markdown(f"### {day}")
                 st.dataframe(df_day)
-                totals = df_day.drop(columns=["id", "date", "dish_name", "amount", "amount_unit"]).sum()
-                st.markdown("**NUTRITION TOTALS:**")
-                st.write({col: round(val, 2) for col, val in totals.items()})
+            # Fix for TypeError: ensure all values are numeric before summing
+            numeric_cols = [col for col in df_day.columns if col not in ["id", "date", "dish_name", "amount", "amount_unit"]]
+            totals = df_day[numeric_cols].apply(pd.to_numeric, errors='coerce').fillna(0.0).sum()
+            st.markdown("**NUTRITION TOTALS:**")
+            st.write({col: round(val, 2) for col, val in totals.items()})
 
     elif page == "📅 TEMPORAL CALENDAR":
         st.markdown("""
@@ -805,6 +807,11 @@ if check_password():
                 "free_sugar", "fibre", "sodium", "calcium",
                 "iron", "vitamin_c", "folate"
             ]
+            
+            # Fix data types before groupby operation to prevent TypeError
+            for col in db_nutrition_cols:
+                df_month[col] = pd.to_numeric(df_month[col], errors='coerce').fillna(0.0)
+            
             daily_totals = df_month.groupby('date')[db_nutrition_cols].sum()
             cal = calendar.Calendar()
             month_days = cal.monthdatescalendar(year, month)
