@@ -576,8 +576,8 @@ if check_password():
             if st.button("⚡ UPDATE TARGETS", type="primary"):
                 st.session_state.calorie_goal = new_calorie_goal
                 st.session_state.protein_goal = new_protein_goal
-                        st.success("✅ TARGETS UPDATED")
-                        st.rerun()
+                st.success("✅ TARGETS UPDATED")
+                st.rerun()
         
         log = get_today_log(today_str)
         if log.empty:
