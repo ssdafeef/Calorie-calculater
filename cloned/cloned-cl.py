@@ -637,7 +637,7 @@ if check_password():
                     if st.button("🗑️", key=f"delete_{row['id']}", help=f"Remove {row['dish_name']}"):
                         delete_food_log_entry(row['id'])
                         st.success(f"✅ REMOVED {row['dish_name']} FROM LOG")
-                        st.experimental_rerun()
+                        st.rerun()
             st.markdown("---")
             
             # Fix for TypeError: ensure all values are numeric before summing
