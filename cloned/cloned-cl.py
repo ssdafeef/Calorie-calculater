@@ -547,7 +547,7 @@ if check_password():
         
         # Initialize session state for goals
         if 'calorie_goal' not in st.session_state:
-            st.session_state.calorie_goal = 2000
+            st.session_state.calorie_goal = 1500
         if 'protein_goal' not in st.session_state:
             st.session_state.protein_goal = 50
             
@@ -784,7 +784,7 @@ if check_password():
             </h1>
         """, unsafe_allow_html=True)
         today = datetime.date.today()
-        year = st.sidebar.number_input("YEAR", min_value=2000, max_value=2100, value=today.year)
+        year = st.sidebar.number_input("YEAR", min_value=1500, max_value=2100, value=today.year)
         month = st.sidebar.number_input("MONTH", min_value=1, max_value=12, value=today.month)
 
         first_day = datetime.date(year, month, 1)
