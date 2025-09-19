@@ -309,7 +309,7 @@ def check_password():
                 🔐 NUTRITION OS v2.1 - ACCESS PROTOCOL
             </h1>
             <div style='text-align: center; margin: 20px;'>
-                <p style='color: var(--neon-purple); font-family: "Courier New", monospace;'>
+                <p style='color: var(--neon-green); font-family: "Courier New", monospace;'>
                     ENTER AUTHORIZATION CODE TO PROCEED
                 </p>
             </div>
@@ -611,15 +611,15 @@ if check_password():
                     labels=['Target', 'Not Logged'],
                     values=[st.session_state.protein_goal, 0],
                     hole=0.4,
-                    marker_colors=['#ff00ff', '#1a1a2e']
+                    marker_colors=["#ffffff", '#1a1a2e']
                 )])
                 fig_protein.update_layout(
                     title=f"PROTEIN TARGET: {st.session_state.protein_goal}g",
                     height=400,
                     paper_bgcolor='rgba(0,0,0,0)',
                     plot_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#ff00ff', family='Courier New'),
-                    title_font=dict(size=16, color='#ff00ff')
+                    font=dict(color="#FFFFFF", family='Courier New'),
+                    title_font=dict(size=16, color="#ffffff")
                 )
                 st.plotly_chart(fig_protein, use_container_width=True)
         else:
@@ -701,7 +701,7 @@ if check_password():
                     labels=protein_data['Status'],
                     values=protein_data['Values'],
                     hole=0.4,
-                    marker_colors=['#ff00ff', '#1a1a2e'],
+                    marker_colors=["#a1e717", '#1a1a2e'],
                     textinfo='label+percent+value',
                     texttemplate='%{label}<br>%{value:.0f}g<br>(%{percent})',
                     textfont=dict(color='#ffffff', family='Courier New')
@@ -711,8 +711,8 @@ if check_password():
                     height=400,
                     paper_bgcolor='rgba(0,0,0,0)',
                     plot_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#ff00ff', family='Courier New'),
-                    title_font=dict(size=16, color='#ff00ff')
+                    font=dict(color="#25e51e", family='Courier New'),
+                    title_font=dict(size=16, color="#14a617")
                 )
                 st.plotly_chart(fig_protein, use_container_width=True)
             
